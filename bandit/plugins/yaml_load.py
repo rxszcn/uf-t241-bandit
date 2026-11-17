@@ -40,6 +40,11 @@ on ``yaml.load`` and yaml.safe_load
 .. versionchanged:: 1.7.3
     CWE information added
 
+.. versionchanged:: 1.8.7
+    Fixed the import gate so ``from yaml import load`` / ``load_all``
+    calls are no longer silently skipped, and extended the rule surface
+    to the ``load_all`` family.
+
 """
 import bandit
 from bandit.core import issue
@@ -49,9 +54,18 @@ from bandit.core import test_properties as test
 @test.test_id("B506")
 @test.checks("Call")
 def yaml_load(context):
-    imported = context.is_module_imported_exact("yaml")
     qualname = context.call_function_name_qual
-    if not imported and isinstance(qualname, str):
+    if not isinstance(qualname, str):
+        return
+
+    # Import bookkeeping records "from yaml import load" as "yaml.load"
+    # (not "yaml"), so accept either the exact module import or the fully
+    # qualified call name recorded for a from-import. Calls whose yaml
+    # target cannot be tied to an actual yaml import are still skipped.
+    imported = context.is_module_imported_exact(
+        "yaml"
+    ) or context.is_module_imported_exact(qualname)
+    if not imported:
         return
 
     qualname_list = qualname.split(".")
@@ -59,7 +73,7 @@ def yaml_load(context):
     if all(
         [
             "yaml" in qualname_list,
-            func == "load",
+            func in ("load", "load_all"),
             not context.check_call_arg_value("Loader", "SafeLoader"),
             not context.check_call_arg_value("Loader", "CSafeLoader"),
             not context.get_call_arg_at_position(1) == "SafeLoader",

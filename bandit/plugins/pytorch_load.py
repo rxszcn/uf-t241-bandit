@@ -41,6 +41,11 @@ that only torch.Tensor objects are loaded.
 
 .. versionadded:: 1.7.10
 
+.. versionchanged:: 1.8.7
+    Fixed the import gate so ``from torch import load`` and
+    ``from torch.serialization import load`` calls are no longer
+    silently skipped.
+
 """
 import bandit
 from bandit.core import issue
@@ -57,9 +62,17 @@ def pytorch_load(context):
     arbitrary code execution. The safe alternative is to use
     `weights_only=True` or the safetensors library.
     """
-    imported = context.is_module_imported_exact("torch")
     qualname = context.call_function_name_qual
-    if not imported and isinstance(qualname, str):
+    if not isinstance(qualname, str):
+        return
+
+    # Import bookkeeping records "from torch import load" as "torch.load"
+    # (not "torch"), so accept either the exact module import or the
+    # fully qualified call name recorded for a from-import.
+    imported = context.is_module_imported_exact(
+        "torch"
+    ) or context.is_module_imported_exact(qualname)
+    if not imported:
         return
 
     if qualname in {"torch.load", "torch.serialization.load"}:

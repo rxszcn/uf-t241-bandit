@@ -509,6 +509,22 @@ class FunctionalTests(testtools.TestCase):
         }
         self.check_example("yaml_load.py", expect)
 
+    def test_yaml_load_from_import(self):
+        """Test for `yaml.load`/`yaml.load_all` via from-import."""
+        expect = {
+            "SEVERITY": {"UNDEFINED": 0, "LOW": 0, "MEDIUM": 3, "HIGH": 0},
+            "CONFIDENCE": {"UNDEFINED": 0, "LOW": 0, "MEDIUM": 0, "HIGH": 3},
+        }
+        self.check_example("yaml_load_from_import.py", expect)
+
+    def test_yaml_load_all(self):
+        """Test for `yaml.load_all` via module attribute."""
+        expect = {
+            "SEVERITY": {"UNDEFINED": 0, "LOW": 0, "MEDIUM": 1, "HIGH": 0},
+            "CONFIDENCE": {"UNDEFINED": 0, "LOW": 0, "MEDIUM": 0, "HIGH": 1},
+        }
+        self.check_example("yaml_load_all.py", expect)
+
     def test_host_key_verification(self):
         """Test for ignoring host key verification."""
         expect = {
@@ -879,6 +895,14 @@ class FunctionalTests(testtools.TestCase):
             "CONFIDENCE": {"UNDEFINED": 0, "LOW": 0, "MEDIUM": 0, "HIGH": 3},
         }
         self.check_example("pytorch_load.py", expect)
+
+    def test_pytorch_load_from_import(self):
+        """Test insecure usage of torch.load via from-import."""
+        expect = {
+            "SEVERITY": {"UNDEFINED": 0, "LOW": 0, "MEDIUM": 2, "HIGH": 0},
+            "CONFIDENCE": {"UNDEFINED": 0, "LOW": 0, "MEDIUM": 0, "HIGH": 2},
+        }
+        self.check_example("pytorch_load_from_import.py", expect)
 
     def test_trojansource(self):
         expect = {
